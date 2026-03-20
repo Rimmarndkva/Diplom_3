@@ -1,17 +1,20 @@
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
+import allure
+from urls import BASE_URL
 
 class BasePage:
     def __init__(self, driver):
         self.driver = driver
-      
-        self.base_url = "https://stellarburgers.education-services.ru"
+        self.base_url = BASE_URL 
 
+    @allure.step('Открытие главной страницы сайта')
     def go_to_site(self):
         """Открывает главную страницу сайта"""
         return self.driver.get(self.base_url)
 
+    @allure.step('Ожидание появления элемента в DOM')
     def find_element_with_wait(self, locator, timeout=10):
         """Ждет, пока элемент появится в DOM, и возвращает его"""
         return WebDriverWait(self.driver, timeout).until(
@@ -19,20 +22,36 @@ class BasePage:
             message=f"Не смогли найти элемент по локатору {locator}"
         )
 
+    @allure.step('Ожидание появления всех элементов в DOM')
+    def find_elements_with_wait(self, locator, timeout=10):
+        """Ждет, пока элементы появятся в DOM, и возвращает их списком"""
+        return WebDriverWait(self.driver, timeout).until(
+            EC.presence_of_all_elements_located(locator),
+            message=f"Не смогли найти элементы по локатору {locator}"
+        )
+
+    @allure.step('Ожидание кликабельности элемента и клик')
     def click_to_element(self, locator, timeout=10):
         """Ждет, пока элемент станет кликабельным, и кликает по нему через JS"""
         element = WebDriverWait(self.driver, timeout).until(
             EC.element_to_be_clickable(locator),
             message=f"Элемент не кликабелен по локатору {locator}"
         )
-        # Выполняем клик через встроенный JavaScript (решает проблему перекрытия элементов)
         self.driver.execute_script("arguments[0].click();", element)
 
+    @allure.step('Получение текста из элемента')
     def get_text_from_element(self, locator, timeout=10):
         """Ждет элемент и забирает из него текст"""
         element = self.find_element_with_wait(locator, timeout)
         return element.text
 
+    @allure.step('Ввод текста в поле')
+    def set_text_to_element(self, locator, text, timeout=10):
+        """Ждет элемент и вводит в него текст"""
+        element = self.find_element_with_wait(locator, timeout)
+        element.send_keys(text)
+
+    @allure.step('Перетаскивание элемента (drag-and-drop)')
     def drag_and_drop(self, source_locator, target_locator, timeout=10):
         """Берет элемент (source) и перетаскивает его в корзину (target) с микропаузами"""
         source_element = self.find_element_with_wait(source_locator, timeout)
@@ -45,3 +64,24 @@ class BasePage:
             .pause(0.5)\
             .release()\
             .perform()
+
+    @allure.step('Получение текущего URL страницы')
+    def get_current_url(self):
+        """Возвращает текущий URL"""
+        return self.driver.current_url
+
+    @allure.step('Ожидание изменения текста в элементе')
+    def wait_for_text_to_change(self, locator, text_to_ignore, timeout=15):
+        """Ждет, пока текст элемента не перестанет быть равным указанному значению"""
+        WebDriverWait(self.driver, timeout).until(
+            lambda d: d.find_element(*locator).text != text_to_ignore,
+            message=f"Текст элемента по локатору {locator} так и не изменился"
+        )
+
+    @allure.step('Ожидание исчезновения элемента с экрана')
+    def wait_for_element_to_disappear(self, locator, timeout=10):
+        """Ждет, пока элемент станет невидимым (закроется окно и т.д.)"""
+        return WebDriverWait(self.driver, timeout).until(
+            EC.invisibility_of_element_located(locator),
+            message=f"Элемент по локатору {locator} так и не исчез"
+        )

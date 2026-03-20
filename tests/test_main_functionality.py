@@ -9,17 +9,16 @@ class TestMainFunctionality:
         main_page.go_to_site()
         
         main_page.click_order_feed_button()
-        assert "feed" in driver.current_url
+        assert "feed" in main_page.get_current_url()
         
         main_page.click_constructor_button()
-        assert driver.current_url == main_page.base_url + "/"
+        assert main_page.get_current_url() == main_page.base_url + "/"
 
     @allure.title('Открытие модального окна с деталями ингредиента')
     def test_open_ingredient_modal(self, driver):
         main_page = MainPage(driver)
         main_page.go_to_site()
         
-
         main_page.click_first_ingredient()
       
         assert main_page.get_ingredient_modal_header_text() == "Детали ингредиента"
@@ -29,11 +28,10 @@ class TestMainFunctionality:
         main_page = MainPage(driver)
         main_page.go_to_site()
         
-    
         main_page.click_first_ingredient()
         main_page.close_ingredient_modal()
-        
-        assert True
+    
+        assert main_page.check_ingredient_modal_is_closed() is True
 
     @allure.title('Увеличение счетчика ингредиента при добавлении в заказ')
     def test_ingredient_counter_increases(self, driver):
